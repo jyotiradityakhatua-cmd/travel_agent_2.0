@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+langchain
+langgraph
+sqlalchemy
+psycopg2-binary
+redis
+serpapi
+python-dotenv
+pydantic
+alembic
