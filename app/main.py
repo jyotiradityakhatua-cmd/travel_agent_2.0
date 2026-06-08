@@ -27,11 +27,29 @@
 
 # Base.metadata.create_all(bind=engine)
 
-from fastapi import FastAPI
+# from fastapi import FastAPI
 from app.api.router import api_router
-from app.db.init_db import init_db
+# from app.db.init_db import init_db
 
-app = FastAPI()
+# app = FastAPI()
+# init_db()
+
+# app.include_router(api_router)
+from fastapi import FastAPI
+
+from app.db.chat_state import ChatState
+from app.db.init_db import init_db
 init_db()
+app = FastAPI()
+# from fastapi.middleware.cors import CORSMiddleware
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],  
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+
 
 app.include_router(api_router)

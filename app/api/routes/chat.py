@@ -189,53 +189,101 @@ from app.memory.chat_store import get as get_memory, add as add_memory
 from app.services.agent import travel_agent
 from  app.db.chat_repo import get_history_db
 
+
+# @router.post("/")
+# def chat(message: str, chat_id: str | None = None, db: Session = Depends(get_db)):
+
+#     if not chat_id:
+#         chat_id = str(uuid.uuid4())
+
+
+#     add_memory(chat_id, "user", message)
+
+
+#     save_message(db, chat_id, "user", message)
+
+#     history = get_memory(chat_id)
+
+#     response = travel_agent(chat_id, message, history)
+
+
+#     add_memory(chat_id, "assistant", response)
+
+
+#     save_message(db, chat_id, "assistant", response)
+
+#     return {
+#         "chat_id": chat_id,
+#         "response": response
+#     }
+
+# @router.post("/")
+# def chat(message: str, chat_id: str | None = None, db: Session = Depends(get_db)):
+
+#     if not chat_id:
+#         chat_id = str(uuid.uuid4())
+
+   
+#     save_message(db, chat_id, "user", message)
+
+#     history = get(chat_id)
+
+
+#     response = travel_agent(chat_id, message, history)
+
+
+#     save_message(db, chat_id, "assistant", response)
+
+#     return {
+#         "chat_id": chat_id,
+#         "response": response,
+#         "db":db
+#     }
+
+
+
+
+
+
+# @router.post("/")
+# def chat(
+#     message: str,
+#     chat_id: str,
+#     db: Session = Depends(get_db)
+# ):
+
+#     response = travel_agent(
+#         chat_id,
+#         message,
+#         db
+#     )
+
+#     return {
+#         "chat_id": chat_id,
+#         "response": response
+#     }
+
+
+
+
 router = APIRouter()
+
+
+
+
 @router.post("/")
-def chat(message: str, chat_id: str | None = None, db: Session = Depends(get_db)):
+def chat(
+    message: str,
+    chat_id: str | None = None,
+    db: Session = Depends(get_db)
+):
 
     if not chat_id:
         chat_id = str(uuid.uuid4())
 
-
-    add_memory(chat_id, "user", message)
-
-
-    save_message(db, chat_id, "user", message)
-
-    history = get_memory(chat_id)
-
-    response = travel_agent(chat_id, message, history)
-
-
-    add_memory(chat_id, "assistant", response)
-
-
-    save_message(db, chat_id, "assistant", response)
+    response = travel_agent(chat_id, message, db)
 
     return {
         "chat_id": chat_id,
         "response": response
-    }
-
-@router.post("/")
-def chat(message: str, chat_id: str | None = None, db: Session = Depends(get_db)):
-
-    if not chat_id:
-        chat_id = str(uuid.uuid4())
-
-   
-    save_message(db, chat_id, "user", message)
-
-    history = get_history_db(db, chat_id)
-
-
-    response = travel_agent(chat_id, message, history)
-
-
-    save_message(db, chat_id, "assistant", response)
-
-    return {
-        "chat_id": chat_id,
-        "response": response,
-        "history": history
     }

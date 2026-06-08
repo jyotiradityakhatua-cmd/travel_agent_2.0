@@ -55,55 +55,232 @@
 
 #     return "Tell me source and destination"
 
-import json
-from app.llm.ollama_client import ask_ollama
-from app.llm.prompt import SYSTEM_PROMPT
+# import json
+# from app.llm.ollama_client import ask_ollama
+# from app.llm.prompt import SYSTEM_PROMPT
+# from app.tools.search_flight import search_flight
+# from app.tools.search_hotel import search_hotel
+# from app.tools.build_itnerary import build_itinerary
+
+
+# def travel_agent(chat_id, message, history):
+
+#     messages = [
+#         {"role": "system", "content": SYSTEM_PROMPT}
+#     ]
+
+
+#     for h in history:
+#         messages.append({
+#             "role": h["role"],
+#             "content": h["content"]
+#         })
+
+
+#     messages.append({"role": "user", "content": message})
+
+
+#     llm_output = ask_ollama(messages)
+
+#     data = json.loads(llm_output)
+
+
+#     if data.get("missing_fields"):
+#         return f"Please provide: {', '.join(data['missing_fields'])}"
+
+
+#     flights = search_flight(
+#         data["source"],
+#         data["destination"],
+#         data["departure_date"]
+#     )
+
+#     hotels = search_hotel(
+#         data["destination"],
+#         data["days"]
+#     )
+
+#     itinerary = build_itinerary({
+#         **data,
+#         "flights": flights,
+#         "hotels": hotels
+#     })
+
+#     return itinerary
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from datetime import datetime, timedelta
+
+from app.services.llm_service import extract_state_with_llm
+
 from app.tools.search_flight import search_flight
 from app.tools.search_hotel import search_hotel
-from app.tools.build_itnerary import build_itinerary
+from app.tools.build_itnerary import build_itnerary
+
+from app.db.chat_state import (
+    get_state,
+    save_state,
+)
+# from app.db.chat_repo import save_message, get_chat_history
+
+def travel_agent(chat_id, message, db):
 
 
-def travel_agent(chat_id, message, history):
+    state = get_state(db, chat_id)
 
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT}
+    print("STATE FROM DATABASE:", state)
+
+    if state is None:
+        state = {
+            "source": None,
+            "destination": None,
+            "departure_date": None,
+            "return_date": None,
+            "days": None,
+        }
+
+    print("CHAT ID:", chat_id)
+    print("LOADED FROM DB:", state)
+
+
+    updated = extract_state_with_llm(
+        state,
+        message
+    )
+
+    print("UPDATED STATE:", updated)
+
+
+    state.update(
+        {
+            k: v
+            for k, v in updated.items()
+            if v not in [None, "", []]
+        }
+    )
+
+  
+    try:
+
+   
+        if (
+            state.get("departure_date")
+            and state.get("return_date")
+        ):
+
+            dep = datetime.strptime(
+                state["departure_date"],
+                "%d %b"
+            )
+
+            ret = datetime.strptime(
+                state["return_date"],
+                "%d %b"
+            )
+
+            state["days"] = (ret - dep).days
+
+
+        elif (
+            state.get("departure_date")
+            and state.get("days")
+            and not state.get("return_date")
+        ):
+
+            dep = datetime.strptime(
+                state["departure_date"],
+                "%d %b"
+            )
+
+            ret = dep + timedelta(
+                days=int(state["days"])
+            )
+
+            state["return_date"] = ret.strftime(
+                "%d %b"
+            )
+
+    except Exception as e:
+        print("Date calculation error:", e)
+
+    print("FINAL STATE:", state)
+
+
+    save_state(
+        db,
+        chat_id,
+        state
+    )
+
+
+    required = [
+        "source",
+        "destination",
+        "departure_date",
     ]
 
+    missing = [
+        field
+        for field in required
+        if not state.get(field)
+    ]
 
-    for h in history:
-        messages.append({
-            "role": h["role"],
-            "content": h["content"]
-        })
-
-
-    messages.append({"role": "user", "content": message})
-
-
-    llm_output = ask_ollama(messages)
-
-    data = json.loads(llm_output)
+    if missing:
+        return f"Please provide: {', '.join(missing)}"
 
 
-    if data.get("missing_fields"):
-        return f"Please provide: {', '.join(data['missing_fields'])}"
+    if (
+        not state.get("days")
+        and not state.get("return_date")
+    ):
+        return "Please provide either days or return_date"
 
 
     flights = search_flight(
-        data["source"],
-        data["destination"],
-        data["departure_date"]
+        state["source"],
+        state["destination"],
+        state["departure_date"],
+        state["return_date"]
     )
+
+    print("FLIGHTS:", flights)
+
 
     hotels = search_hotel(
-        data["destination"],
-        data["days"]
+        state["destination"],
+        state["departure_date"],
+        state["return_date"]
     )
 
-    itinerary = build_itinerary({
-        **data,
-        "flights": flights,
-        "hotels": hotels
-    })
+    print("HOTELS:", hotels)
+
+
+    itinerary = build_itnerary(
+        state,
+        flights,
+        hotels
+    )
 
     return itinerary
+
+
+
+
+
+
+
+
+
+

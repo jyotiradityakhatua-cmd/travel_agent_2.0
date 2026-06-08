@@ -17,5 +17,5 @@ Return ONLY valid JSON:
 Rules:
 - If something is missing, put it in missing_fields
 - Do not explain
-- Only JSON output
+- Only Markdown output
 """

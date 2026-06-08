@@ -1,13 +1,17 @@
 
 from serpapi import GoogleSearch
 
-from app.utils.logger import logger
+# from app.utils.logger import logger
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 
-SERP_API_KEY = "your_serpapi_key"
+SERP_API_KEY = "SERP_API_KEY"
 
 
-logger.info("Fetching flights from SerpAPI")
+# logger.info("Fetching flights from SerpAPI")
 
 def search_flights(source, destination, departure_date, return_date):
 
@@ -17,15 +21,13 @@ def search_flights(source, destination, departure_date, return_date):
         "arrival_id": destination,
         "outbound_date": departure_date,
         "return_date": return_date,
-        "currency": "INR",
-        "hl": "en",
         "api_key": SERP_API_KEY
     }
 
     search = GoogleSearch(params)
     results = search.get_dict()
 
-    return normalize_flights(results)
+    print(results)
 
 
 
@@ -37,15 +39,13 @@ def search_hotels(destination, check_in, check_out):
         "q": destination,
         "check_in_date": check_in,
         "check_out_date": check_out,
-        "currency": "INR",
-        "hl": "en",
         "api_key": SERP_API_KEY
     }
 
     search = GoogleSearch(params)
     results = search.get_dict()
 
-    return normalize_hotels(results)
+    print(results)
 
 
 

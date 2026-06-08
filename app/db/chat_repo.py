@@ -1,5 +1,5 @@
-
 from app.db.models.chat_message import ChatMessage
+
 
 def save_message(db, chat_id: str, role: str, content: str):
     msg = ChatMessage(
