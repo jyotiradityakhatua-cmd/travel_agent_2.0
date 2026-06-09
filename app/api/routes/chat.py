@@ -179,7 +179,7 @@
 #         "response": response,
 #         "history": get(chat_id)
 #     }
-import uuid
+from uuid import uuid4
 from fastapi import APIRouter
 from fastapi import Depends
 from sqlalchemy.orm import Session
@@ -187,9 +187,13 @@ from app.db.session import get_db
 from app.db.chat_repo import save_message
 from app.memory.chat_store import get as get_memory, add as add_memory
 from app.services.agent import travel_agent
-from  app.db.chat_repo import get_history_db
-
-
+from app.db.chat_repo import get_chat_history
+from app.db.chat_repo import  get_all_chat_ids
+from app.db.models.chat_session import ChatSession
+from app.db.models.user import User
+from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
+import uuid
 # @router.post("/")
 # def chat(message: str, chat_id: str | None = None, db: Session = Depends(get_db)):
 
@@ -271,9 +275,267 @@ router = APIRouter()
 
 
 
+# @router.post("/")
+# def chat(
+#     message: str,
+#     chat_id: str | None = None,
+#     db: Session = Depends(get_db)
+# ):
+
+#     if not chat_id:
+#         chat_id = str(uuid.uuid4())
+
+#     response = travel_agent(chat_id, message, db)
+
+#     return {
+#         "chat_id": chat_id,
+#         "response": response
+#     }
+
+
+@router.post("/register")
+def register(
+    username: str,
+    password: str,
+    db: Session = Depends(get_db)
+):
+
+    existing_user = (
+        db.query(User)
+        .filter(User.username == username)
+        .first()
+    )
+
+    if existing_user:
+        raise HTTPException(
+            status_code=400,
+            detail="Username already exists"
+        )
+
+    user = User(
+        username=username,
+        password=password
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "user_id": user.user_id,
+        "username": user.username
+    }
+
+@router.post("/login")
+def login(
+    username: str,
+    password: str,
+    db: Session = Depends(get_db)
+):
+
+    user = (
+        db.query(User)
+        .filter(User.username == username)
+        .first()
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    if user.password != password:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid password"
+        )
+
+    return {
+        "user_id": user.user_id,
+        "username": user.username
+    }
+
+
+
+
+
+
+
+# @router.post("/")
+# def chat(
+#     message: str,
+#     chat_id: str | None = None,
+#     db: Session = Depends(get_db)
+# ):
+
+#     if not chat_id:
+#         chat_id = str(uuid.uuid4())
+
+
+#     save_message(
+#         db=db,
+#         chat_id=chat_id,
+#         role="user",
+#         message=message
+#     )
+
+
+#     response = travel_agent(
+#         chat_id=chat_id,
+#         message=message,
+#         db=db
+#     )
+
+
+#     save_message(
+#         db=db,
+#         chat_id=chat_id,
+#         role="assistant",
+#         message=response
+#     )
+
+#     return {
+#         "chat_id": chat_id,
+#         "response": response
+#     }
+
+
+# from fastapi import APIRouter, Depends
+# from sqlalchemy.orm import Session
+
+# from app.db.session import get_db
+# from app.db.chat_repo import save_message
+# from app.db.models.chat_session import ChatSession
+# from app.services.agent import travel_agent
+
+# router = APIRouter()
+
+
+# @router.post("/")
+# def chat(
+#     message: str,
+#     user_id: str,
+#     chat_id: str | None = None,
+#     db: Session = Depends(get_db)
+# ):
+
+
+#     if not chat_id:
+#         chat_id = str(uuid4())
+
+   
+#     chat_session = (
+#         db.query(ChatSession)
+#         .filter(ChatSession.chat_id == chat_id)
+#         .first()
+#     )
+
+#     if not chat_session:
+
+#         chat_session = ChatSession(
+#             chat_id=chat_id,
+#             user_id=user_id,
+#             title=message[:50]
+#         )
+
+#         db.add(chat_session)
+#         db.commit()
+
+
+#     save_message(
+#         db=db,
+#         chat_id=chat_id,
+#         role="user",
+#         message=message
+#     )
+
+
+#     response = travel_agent(
+#         chat_id=chat_id,
+#         message=message,
+#         db=db
+#     )
+
+
+#     save_message(
+#         db=db,
+#         chat_id=chat_id,
+#         role="assistant",
+#         message=response
+#     )
+
+#     return {
+#         "user_id": user_id,
+#         "chat_id": chat_id,
+#         "response": response
+#     }
+
+
+
+# @router.post("/")
+# def chat(
+#     message: str,
+#     user_id: str,
+#     chat_id: str | None = None,
+#     db: Session = Depends(get_db)
+# ):
+
+#     if not chat_id:
+#         chat_id = str(uuid.uuid4())
+
+#     chat_session = (
+#         db.query(ChatSession)
+#         .filter(ChatSession.chat_id == chat_id)
+#         .first()
+#     )
+
+#     if not chat_session:
+#         chat_session = ChatSession(
+#             chat_id=chat_id,
+#             user_id=user_id,
+#             title=message[:50]
+#         )
+#         db.add(chat_session)
+#         db.commit()
+
+#     save_message(
+#         db=db,
+#         chat_id=chat_id,
+#         role="user",
+#         message=message
+#     )
+
+   
+    # def stream_response():
+
+    #     full_response = ""
+
+    #     for chunk in travel_agent_stream(
+    #         chat_id=chat_id,
+    #         message=message,
+    #         db=db
+    #     ):
+    #         full_response += chunk
+    #         yield chunk
+
+    #     save_message(
+    #         db=db,
+    #         chat_id=chat_id,
+    #         role="assistant",
+    #         message=full_response
+    #     )
+
+    # return StreamingResponse(
+    #     stream_response(),
+    #     media_type="text/plain"
+    # )
+
+
 @router.post("/")
 def chat(
     message: str,
+    user_id: str,
     chat_id: str | None = None,
     db: Session = Depends(get_db)
 ):
@@ -281,9 +543,109 @@ def chat(
     if not chat_id:
         chat_id = str(uuid.uuid4())
 
-    response = travel_agent(chat_id, message, db)
+    chat_session = (
+        db.query(ChatSession)
+        .filter(ChatSession.chat_id == chat_id)
+        .first()
+    )
 
-    return {
-        "chat_id": chat_id,
-        "response": response
-    }
+    if not chat_session:
+        chat_session = ChatSession(
+            chat_id=chat_id,
+            user_id=user_id,
+            title=message[:50]
+        )
+        db.add(chat_session)
+        db.commit()
+
+    save_message(
+        db=db,
+        chat_id=chat_id,
+        role="user",
+        message=message
+    )
+
+
+    def stream():
+        full_response = ""
+
+        for chunk in travel_agent(chat_id, message, db):
+            full_response += chunk
+            yield chunk  
+        # for chunk in travel_agent(chat_id, message, db):
+        #      for word in chunk.split(" "):
+        #          full_response += word + " "
+        # yield word + " "
+  
+        save_message(
+            db=db,
+            chat_id=chat_id,
+            role="assistant",
+            message=full_response
+        )
+
+    
+        yield f"\n[CHAT_ID:{chat_id}]"
+
+    return StreamingResponse(
+        stream(),
+        media_type="text/plain"
+    )
+
+@router.get("/history/{chat_id}")
+def history(
+    chat_id: str,
+    db: Session = Depends(get_db)
+):
+
+    messages = get_chat_history(
+        db=db,
+        chat_id=chat_id
+    )
+
+    return [
+        {
+            "id": msg.id,
+            "role": msg.role,
+            "message": msg.message,
+            "created_at": msg.created_at
+        }
+        for msg in messages
+    ]
+
+@router.get("/chats")
+def get_chats(db: Session = Depends(get_db)):
+
+    chats = get_all_chat_ids(db)
+
+    return [
+        {
+            "chat_id": chat[0]
+        }
+        for chat in chats
+    ]
+
+
+@router.get("/users/{user_id}/chats")
+def get_user_chats(
+    user_id: str,
+    db: Session = Depends(get_db)
+):
+
+    chats = (
+        db.query(ChatSession)
+        .filter(ChatSession.user_id == user_id)
+        .order_by(ChatSession.created_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "chat_id": chat.chat_id,
+            "title": chat.title,
+            "created_at": chat.created_at
+        }
+        for chat in chats
+    ]
+
+

@@ -216,7 +216,7 @@ def search_flight(source, destination, date, return_date):
     prompt = f"""
 You are a precise flight search engine.
 
-⚠️ CRITICAL RULE:
+ CRITICAL RULE:
 You MUST return flights ONLY for the exact dates provided.
 Do NOT include any other dates.
 

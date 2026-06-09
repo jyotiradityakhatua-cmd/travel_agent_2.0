@@ -587,9 +587,116 @@
 #     return response.json()["response"]
 
 
+# import requests
+
+# def build_itnerary(data, flights, hotels):
+#     prompt = f"""
+# You are a strict AI travel planner.
+
+# ## RULES
+# - Follow EXACT section order
+# - Output ONLY Markdown
+# - Do NOT skip or summarize days
+# - Generate ALL {data.get("days")} days explicitly
+# - No "... and so on"
+# - Every day must include: morning, afternoon, evening, food
+
+# ---
+
+# ## 1.  AVAILABLE FLIGHTS
+# {flights}
+
+# ---
+
+# ## 2.  AVAILABLE HOTELS
+# {hotels}
+
+# ---
+
+# ## 3.  TRIP OVERVIEW
+# Short summary of the trip.
+
+# ---
+
+# ## 4.  DAY-BY-DAY ITINERARY
+# Generate exactly {data.get("days")} days:
+
+# Format:
+# ### Day 1
+# - Morning:
+# - Afternoon:
+# - Evening:
+# - Food:
+
+# ### Day 2
+# ...
+
+# ### Day {data.get("days")}
+
+# Rules:
+# - Each day must be unique
+# - Must be realistic travel flow
+# - No repetition
+
+# ---
+
+# ## 5.  FOOD RECOMMENDATIONS
+# Local dishes only.
+
+# ---
+
+# ## 6.  BEST AREAS TO STAY
+# List top areas.
+
+# ---
+
+# ## 7.  TRANSPORT GUIDE
+# Local transport options.
+
+# ---
+
+# ## 8.  ESTIMATED BUDGET
+# Markdown table only.
+
+# ---
+
+# ## 9.  TRAVEL TIPS
+# Bullet points only.
+
+# ---
+
+# USER:
+# Source: {data.get("source")}
+# Destination: {data.get("destination")}
+# Departure: {data.get("departure_date")}
+# Return: {data.get("return_date")}
+# Days: {data.get("days")}
+# """
+
+#     response = requests.post(
+#         "http://localhost:11434/api/generate",
+#         json={
+#             "model": "llama3",
+#             "prompt": prompt,
+#             "stream": True
+#         }
+#     )
+# stream= True
+# for line in response.iter_lines():
+#        if line:
+#             try:
+#                 import json
+#                 chunk = json.loads(line.decode("utf-8"))
+#                 yield chunk.get("response", "")
+#             except:
+#                 continue
+
+
 import requests
+import json
 
 def build_itnerary(data, flights, hotels):
+
     prompt = f"""
 You are a strict AI travel planner.
 
@@ -603,25 +710,24 @@ You are a strict AI travel planner.
 
 ---
 
-## 1.  AVAILABLE FLIGHTS
+## 1. AVAILABLE FLIGHTS
 {flights}
 
 ---
 
-## 2.  AVAILABLE HOTELS
+## 2. AVAILABLE HOTELS
 {hotels}
 
 ---
 
-## 3.  TRIP OVERVIEW
+## 3. TRIP OVERVIEW
 Short summary of the trip.
 
 ---
 
-## 4.  DAY-BY-DAY ITINERARY
+## 4. DAY-BY-DAY ITINERARY
 Generate exactly {data.get("days")} days:
 
-Format:
 ### Day 1
 - Morning:
 - Afternoon:
@@ -633,34 +739,29 @@ Format:
 
 ### Day {data.get("days")}
 
-Rules:
-- Each day must be unique
-- Must be realistic travel flow
-- No repetition
-
 ---
 
-## 5.  FOOD RECOMMENDATIONS
+## 5. FOOD RECOMMENDATIONS
 Local dishes only.
 
 ---
 
-## 6.  BEST AREAS TO STAY
+## 6. BEST AREAS TO STAY
 List top areas.
 
 ---
 
-## 7.  TRANSPORT GUIDE
+## 7. TRANSPORT GUIDE
 Local transport options.
 
 ---
 
-## 8.  ESTIMATED BUDGET
+## 8. ESTIMATED BUDGET
 Markdown table only.
 
 ---
 
-## 9.  TRAVEL TIPS
+## 9. TRAVEL TIPS
 Bullet points only.
 
 ---
@@ -678,8 +779,16 @@ Days: {data.get("days")}
         json={
             "model": "llama3",
             "prompt": prompt,
-            "stream": False
-        }
+            "stream": True
+        },
+        stream=True
     )
 
-    return response.json()["response"]
+    for line in response.iter_lines(decode_unicode=True):
+
+        if line:
+            try:
+                chunk = json.loads(line)
+                yield chunk.get("response", "")
+            except Exception:
+                continue

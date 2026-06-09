@@ -133,7 +133,9 @@ from app.db.chat_state import (
     get_state,
     save_state,
 )
-# from app.db.chat_repo import save_message, get_chat_history
+
+from app.db.chat_repo import save_message
+from fastapi.responses import StreamingResponse
 
 def travel_agent(chat_id, message, db):
 
@@ -224,11 +226,13 @@ def travel_agent(chat_id, message, db):
         state
     )
 
+   
 
     required = [
         "source",
         "destination",
-        "departure_date",
+        "departure_date"
+        
     ]
 
     missing = [
@@ -277,6 +281,117 @@ def travel_agent(chat_id, message, db):
 
 
 
+# def stream():
+#     itinerary_text = ""
+
+#     for chunk in build_itnerary(state, flights, hotels):
+#         itinerary_text += chunk
+#         yield chunk   
+
+
+# return StreamingResponse(
+#     stream(),
+#     media_type="text/plain"
+# )
+
+# from datetime import datetime, timedelta
+
+# from fastapi.responses import StreamingResponse
+
+# from app.services.llm_service import extract_state_with_llm
+# from app.tools.search_flight import search_flight
+# from app.tools.search_hotel import search_hotel
+# from app.tools.build_itnerary import build_itnerary
+
+# from app.db.chat_state import get_state, save_state
+# from app.db.chat_repo import save_message
+
+
+# def travel_agent(chat_id, message, db):
+
+
+#     state = get_state(db, chat_id)
+
+#     if state is None:
+#         state = {
+#             "source": None,
+#             "destination": None,
+#             "departure_date": None,
+#             "return_date": None,
+#             "days": None,
+#         }
+
+#     updated = extract_state_with_llm(state, message)
+
+#     state.update({
+#         k: v for k, v in updated.items()
+#         if v not in [None, "", []]
+#     })
+
+
+#     try:
+#         if state.get("departure_date") and state.get("return_date"):
+
+#             dep = datetime.strptime(state["departure_date"], "%d %b")
+#             ret = datetime.strptime(state["return_date"], "%d %b")
+
+#             state["days"] = (ret - dep).days
+
+#         elif state.get("departure_date") and state.get("days") and not state.get("return_date"):
+
+#             dep = datetime.strptime(state["departure_date"], "%d %b")
+#             ret = dep + timedelta(days=int(state["days"]))
+
+#             state["return_date"] = ret.strftime("%d %b")
+
+#     except Exception as e:
+#         print("Date calculation error:", e)
+
+
+#     save_state(db, chat_id, state)
+
+#     required = ["source", "destination", "departure_date"]
+
+#     missing = [f for f in required if not state.get(f)]
+
+#     if missing:
+#         return StreamingResponse(iter([f"Please provide: {', '.join(missing)}"]),
+#                                  media_type="text/plain")
+
+#     if not state.get("days") and not state.get("return_date"):
+#         return StreamingResponse(iter(["Please provide either days or return_date"]),
+#                                  media_type="text/plain")
+
+#     flights = search_flight(
+#         state["source"],
+#         state["destination"],
+#         state["departure_date"],
+#         state["return_date"]
+#     )
+
+#     hotels = search_hotel(
+#         state["destination"],
+#         state["departure_date"],
+#         state["return_date"]
+#     )
+
+#     def stream():
+
+
+#         yield "Generating your travel itinerary...\n\n"
+
+#         itinerary_text = ""
+
+#         for chunk in build_itnerary(state, flights, hotels):
+#             itinerary_text += chunk
+#             yield chunk
+
+   
+
+#     return StreamingResponse(
+#         stream(),
+#         media_type="text/plain"
+#     )
 
 
 
@@ -284,3 +399,269 @@ def travel_agent(chat_id, message, db):
 
 
 
+
+# def travel_agent(chat_id, message, db):
+
+#     state = get_state(db, chat_id)
+
+#     if not state:
+#         state = {
+#             "source": None,
+#             "destination": None,
+#             "departure_date": None,
+#             "return_date": None,
+#             "days": None,
+#         }
+
+#     updated = extract_state_with_llm(state, message)
+
+#     state.update({
+#         k: v for k, v in updated.items()
+#         if v not in [None, "", []]
+#     })
+
+ 
+#     try:
+#         dep = state.get("departure_date")
+#         ret = state.get("return_date")
+#         days = state.get("days")
+
+#         if dep and ret:
+#             dep_dt = datetime.strptime(dep, "%d %b")
+#             ret_dt = datetime.strptime(ret, "%d %b")
+#             state["days"] = (ret_dt - dep_dt).days
+
+#         elif dep and days and not ret:
+#             dep_dt = datetime.strptime(dep, "%d %b")
+#             ret_dt = dep_dt + timedelta(days=int(days))
+#             state["return_date"] = ret_dt.strftime("%d %b")
+
+#     except Exception as e:
+#         print("Date calculation error:", e)
+
+
+#     save_state(db, chat_id, state)
+
+
+#     required_fields = ["source", "destination", "departure_date"]
+
+#     missing = [f for f in required_fields if not state.get(f)]
+
+#     if missing:
+#         return f"Please provide: {', '.join(missing)}"
+
+#     if not state.get("days") and not state.get("return_date"):
+#         return "Please provide either days or return_date"
+
+
+#     flights = search_flight(
+#         state["source"],
+#         state["destination"],
+#         state["departure_date"],
+#         state["return_date"]
+#     )
+
+#     hotels = search_hotel(
+#         state["destination"],
+#         state["departure_date"],
+#         state["return_date"]
+#     )
+
+#     itinerary = build_itnerary(
+#         state,
+#         flights,
+#         hotels
+#     )
+
+#     return itinerary
+
+
+
+
+
+# def travel_agent_stream(chat_id, message, db):
+
+
+#     state = get_state(db, chat_id)
+
+#     if not state:
+#         state = {
+#             "source": None,
+#             "destination": None,
+#             "departure_date": None,
+#             "return_date": None,
+#             "days": None,
+#         }
+
+#     updated = extract_state_with_llm(state, message)
+
+#     state.update({
+#         k: v for k, v in updated.items()
+#         if v not in [None, "", []]
+#     })
+
+#     yield " Updating travel details...\n\n"
+
+
+#     try:
+#         dep = state.get("departure_date")
+#         ret = state.get("return_date")
+
+#         if dep and ret:
+#             dep_dt = datetime.fromisoformat(dep)
+#             ret_dt = datetime.fromisoformat(ret)
+#             state["days"] = (ret_dt - dep_dt).days
+
+#         elif dep and state.get("days") and not ret:
+#             dep_dt = datetime.fromisoformat(dep)
+#             ret_dt = dep_dt + timedelta(days=int(state["days"]))
+#             state["return_date"] = ret_dt.date().isoformat()
+
+#     except Exception as e:
+#         yield f" Date parsing error: {e}\n\n"
+
+#     save_state(db, chat_id, state)
+
+#     required = ["source", "destination", "departure_date"]
+
+#     missing = [f for f in required if not state.get(f)]
+
+#     if missing:
+#         yield f" Missing fields: {', '.join(missing)}"
+#         return
+
+#     if not state.get("days") and not state.get("return_date"):
+#         yield " Please provide either days or return_date"
+#         return
+
+
+#     yield "\nFetching flights...\n"
+
+#     flights = search_flight(
+#         state["source"],
+#         state["destination"],
+#         state["departure_date"],
+#         state["return_date"]
+#     )
+
+#     yield flights + "\n"
+
+
+#     yield "\n Fetching hotels...\n"
+
+#     hotels = search_hotel(
+#         state["destination"],
+#         state["departure_date"],
+#         state["return_date"]
+#     )
+
+#     yield hotels + "\n"
+
+  
+#     yield "\n Generating itinerary...\n\n"
+# from datetime import datetime, timedelta
+
+
+# def travel_agent_stream(chat_id, message, db):
+
+#     # =========================
+#     # 1. LOAD STATE
+#     # =========================
+#     state = get_state(db, chat_id)
+
+#     if not state:
+#         state = {
+#             "source": None,
+#             "destination": None,
+#             "departure_date": None,
+#             "return_date": None,
+#             "days": None,
+#         }
+    
+
+#         yield f"Chat ID: {chat_id}\n\n"
+#     yield "Understanding your travel request...\n\n"
+
+
+#     updated = extract_state_with_llm(state, message)
+
+#     state.update({
+#         k: v for k, v in updated.items()
+#         if v not in [None, "", []]
+#     })
+
+#     yield f"Route: {state.get('source')} → {state.get('destination')}\n"
+
+
+#     try:
+#         dep = state.get("departure_date")
+#         ret = state.get("return_date")
+#         days = state.get("days")
+
+#         if dep and ret:
+#             dep_dt = datetime.strptime(dep, "%d %b")
+#             ret_dt = datetime.strptime(ret, "%d %b")
+#             state["days"] = (ret_dt - dep_dt).days
+
+#         elif dep and days and not ret:
+#             dep_dt = datetime.strptime(dep, "%d %b")
+#             ret_dt = dep_dt + timedelta(days=int(days))
+#             state["return_date"] = ret_dt.strftime("%d %b")
+
+#     except Exception:
+#         yield "Date parsing issue detected, using fallback format\n"
+
+#     save_state(db, chat_id, state)
+
+
+#     required_fields = ["source", "destination", "departure_date"]
+
+#     missing = [f for f in required_fields if not state.get(f)]
+
+#     if missing:
+#         yield f"\nplease provide: {', '.join(missing)}"
+#         return
+
+#     if not state.get("days") and not state.get("return_date"):
+#         yield "\nPlease provide either days or return_date"
+#         return
+
+#     # =========================
+#     # 6. FLIGHTS
+#     # =========================
+#     yield "\nSearching flights...\n"
+
+#     flights = search_flight(
+#         state["source"],
+#         state["destination"],
+#         state["departure_date"],
+#         state["return_date"]
+#     )
+
+#     yield flights + "\n"
+
+#     # =========================
+#     # 7. HOTELS
+#     # =========================
+#     yield "\nSearching hotels...\n"
+
+#     hotels = search_hotel(
+#         state["destination"],
+#         state["departure_date"],
+#         state["return_date"]
+#     )
+
+#     yield hotels + "\n"
+
+#     # =========================
+#     # 8. ITINERARY GENERATION
+#     # =========================
+#     yield "\nGenerating itinerary...\n\n"
+
+#     itinerary = build_itnerary(state, flights, hotels)
+
+#     # =========================
+#     # 9. STREAM FINAL OUTPUT
+#     # =========================
+#     for word in itinerary.split(" "):
+#         yield word + " "

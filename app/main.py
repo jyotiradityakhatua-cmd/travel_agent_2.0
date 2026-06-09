@@ -29,6 +29,9 @@
 
 # from fastapi import FastAPI
 from app.api.router import api_router
+from app.api.routes.chat import router as chat_router
+
+
 # from app.db.init_db import init_db
 
 # app = FastAPI()
@@ -53,3 +56,8 @@ app = FastAPI()
 
 
 app.include_router(api_router)
+
+app.include_router(
+    chat_router,
+    prefix=""
+)
