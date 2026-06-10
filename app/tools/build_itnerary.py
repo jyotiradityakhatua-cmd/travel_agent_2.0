@@ -708,7 +708,6 @@ You are a strict AI travel planner.
 - No "... and so on"
 - Every day must include: morning, afternoon, evening, food
 
----
 
 ## 1. AVAILABLE FLIGHTS
 {flights}
@@ -784,8 +783,10 @@ Days: {data.get("days")}
         stream=True
     )
 
-    for line in response.iter_lines(decode_unicode=True):
 
+
+    for line in response.iter_lines(decode_unicode=True):
+        print(line)
         if line:
             try:
                 chunk = json.loads(line)

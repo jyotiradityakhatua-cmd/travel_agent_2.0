@@ -881,9 +881,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# =========================================================
-# SESSION INIT
-# =========================================================
+
 def init_session():
     defaults = {
         "user_id": None,
@@ -896,9 +894,7 @@ def init_session():
 init_session()
 
 
-# =========================================================
-# API LAYER
-# =========================================================
+
 def login(username, password):
     return requests.post(
         f"{API_URL}/login",
@@ -999,9 +995,7 @@ def auth_page():
     st.stop()
 
 
-# =========================================================
-# SIDEBAR
-# =========================================================
+
 def sidebar():
     with st.sidebar:
         st.title("✈️ Travel Planner")
@@ -1014,7 +1008,7 @@ def sidebar():
 
         st.divider()
 
-        # NEW CHAT (chat_id hidden completely)
+
         if st.button("➕ New Chat", use_container_width=True):
             chat = create_new_chat(st.session_state.user_id)
             st.session_state.chat_id = chat["chat_id"]
@@ -1036,7 +1030,7 @@ def sidebar():
 def chat_ui():
     st.title("AI Travel Planner")
 
-    # auto create chat if missing (hidden)
+    
     if not st.session_state.chat_id:
         st.session_state.chat_id = create_new_chat(
             st.session_state.user_id
@@ -1050,11 +1044,11 @@ def chat_ui():
 
     if prompt := st.chat_input("Where would you like to travel?"):
 
-        # user message
+  
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # assistant (HUMAN TYPING EFFECT)
+   
         with st.chat_message("assistant"):
             placeholder = st.empty()
             full_response = ""
@@ -1077,9 +1071,7 @@ def chat_ui():
                         time.sleep(random.uniform(0.005, 0.02))
 
 
-# =========================================================
-# ROUTER
-# =========================================================
+
 if not st.session_state.user_id:
     auth_page()
 else:

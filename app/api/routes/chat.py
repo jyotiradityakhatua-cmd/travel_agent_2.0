@@ -585,7 +585,7 @@ def chat(
         )
 
     
-        yield f"\n[CHAT_ID:{chat_id}]"
+        # yield f"\n[CHAT_ID:{chat_id}]"
 
     return StreamingResponse(
         stream(),
